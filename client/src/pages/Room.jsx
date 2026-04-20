@@ -2,42 +2,62 @@ import { useEffect, useState } from "react";
 import socket from "../socket";
 import VideoPlayer from "../components/VideoPlayer";
 import Participants from "../components/Participants";
+import Chat from "../components/Chat";
+import "../styles/room.css";
 
 function Room({ username, roomId }) {
-  // const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState({});
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // useEffect(() => {
-  //   socket.emit("join_room", { roomId, username });
+  useEffect(() => {
+    socket.emit("join_room", { roomId, username });
 
-  //   socket.on("user_joined", ({ users }) => setUsers(users));
-  //   socket.on("user_left", ({ users }) => setUsers(users));
+    socket.on("user_joined", ({ users }) => {
+      setUsers(users);
 
-  //   return () => socket.off();
-  // }, [roomId, username]);
-const [users, setUsers] = useState([]);
-const [currentUser, setCurrentUser] = useState(null);
+      const me = Object.values(users).find(
+        (u) => u.username === username
+      );
 
-useEffect(() => {
-  socket.emit("join_room", { roomId, username });
+      setCurrentUser(me);
+    });
 
-  socket.on("user_joined", ({ users }) => {
-    setUsers(users);
+    socket.on("user_left", ({ users }) => {
+      setUsers(users);
+    });
 
-    const me = users.find((u) => u.username === username);
-    setCurrentUser(me);
-  });
+    socket.on("role_assigned", ({ users }) => {
+      setUsers(users);
+    });
 
-  return () => socket.off();
-}, [roomId, username]);
+    return () => socket.off();
+  }, [roomId, username]);
+
   return (
-    <div>
+  <div className="room-container">
+
+
+    <div className="room-left">
       <h2>Room: {roomId}</h2>
 
-      {/* <VideoPlayer roomId={roomId} /> */}
-      <VideoPlayer roomId={roomId} role={currentUser?.role} />
-      <Participants users={users} />
+      <div className="video-box">
+        <VideoPlayer roomId={roomId} role={currentUser?.role} />
+      </div>
     </div>
-  );
+
+ 
+    <div className="room-right">
+      <div className="card">
+        <Participants roomId={roomId} role={currentUser?.role} />
+      </div>
+
+      <div className="card">
+        <Chat roomId={roomId} username={username} />
+      </div>
+    </div>
+
+  </div>
+);
 }
 
 export default Room;
