@@ -1,0 +1,59 @@
+
+.home-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  font-family: "Segoe UI", sans-serif;
+}
+
+
+.home-card {
+  background: #1e293b;
+  padding: 40px;
+  border-radius: 16px;
+  width: 350px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+
+.home-card h1 {
+  text-align: center;
+  color: #38bdf8;
+}
+
+
+.home-card input {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+
+  background: #0f172a;
+  color: white;
+}
+
+
+.home-card button {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+
+  background: #38bdf8;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.home-card button:hover {
+  background: #0ea5e9;
+}

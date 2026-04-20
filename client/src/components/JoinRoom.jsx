@@ -1,5 +1,6 @@
 import {useState} from "react";
- 
+import "../styles/Home.css"; 
+
 function JoinRoom({ onJoin }) {
     const [username, setUsername]=useState("");
     const [roomId, setRoomId]=useState("");
@@ -8,22 +9,31 @@ function JoinRoom({ onJoin }) {
         if(!username || !roomId) return;
         onJoin({ username, roomId });
     }
-    return(
-        <div>
-           <h2>Join Watch Party</h2>
-                 <input
-        placeholder="Username"
+return (
+  <div className="home-container">
+    <div className="home-card">
+      <h1>🎬 Watch Party</h1>
+
+      <input
+        type="text"
+        placeholder="Enter Username"
+        value={username}
         onChange={(e) => setUsername(e.target.value)}
       />
-      <br /><br />
+
       <input
-        placeholder="Room ID"
+        type="text"
+        placeholder="Enter Room ID"
+        value={roomId}
         onChange={(e) => setRoomId(e.target.value)}
       />
-      <br /><br />
-      <button onClick={handleJoin}>Join Room</button>
-        </div>
-    );
+
+      <button onClick={handleJoin}>
+        Join Watch Party
+      </button>
+    </div>
+  </div>
+);
 }
 
 export default JoinRoom;
