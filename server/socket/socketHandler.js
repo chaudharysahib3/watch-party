@@ -38,32 +38,48 @@ function socketHandler(io) {
       return rooms[roomId]?.host === socket.id;
     };
 
+    // const isModeratorOrHost = (roomId) => {
+    //   const user = rooms[roomId]?.users[socket.id];
+    //   return user?.role === "host" || user?.role === "moderator";
+    // };
     const isModeratorOrHost = (roomId) => {
-      const user = rooms[roomId]?.users[socket.id];
-      return user?.role === "host" || user?.role === "moderator";
-    };
+  const room = rooms[roomId];
+  if (!room) return false;
+
+  const user = room.users[socket.id];
+
+  console.log("CHECK ROLE:", socket.id, user); // 🔥 DEBUG
+
+  if (!user) return false;
+
+  return user.role === "host" || user.role === "moderator";
+};
 
 
     socket.on("play", ({ roomId }) => {
       if (!isModeratorOrHost(roomId)) return;
-      socket.to(roomId).emit("play");
+      // socket.to(roomId).emit("play");
+      io.to(roomId).emit("play");
     });
 
 
     socket.on("pause", ({ roomId }) => {
       if (!isModeratorOrHost(roomId)) return;
-      socket.to(roomId).emit("pause");
+      // socket.to(roomId).emit("pause");
+      io.to(roomId).emit("pause");
     });
 
 
     socket.on("seek", ({ roomId, time }) => {
       if (!isModeratorOrHost(roomId)) return;
-      socket.to(roomId).emit("seek", { time });
+      // socket.to(roomId).emit("seek", { time });
+      io.to(roomId).emit("seek", { time });
     });
 
 
     socket.on("change_video", ({ roomId, videoId }) => {
-      if (!isModeratorOrHost(roomId)) return;
+      // if (!isModeratorOrHost(roomId)) return;
+       if (!isHost(roomId)) return; // 🔥 ONLY HOST
       io.to(roomId).emit("change_video", { videoId });
     });
 
@@ -77,6 +93,8 @@ function socketHandler(io) {
 
       if (room.users[userId]) {
         room.users[userId].role = role;
+
+        console.log("ROLE UPDATED:", userId, role);
 
         io.to(roomId).emit("role_assigned", {
           users: room.users,

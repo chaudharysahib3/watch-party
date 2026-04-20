@@ -113,7 +113,8 @@ useEffect(() => {
   }, []);
 
   const handleVideoChange = () => {
-    if (role !== "host" && role !== "moderator") return;
+    // if (role !== "host" && role !== "moderator") return;
+    if (role !== "host") return;
 
     const url = inputValue.trim();
     let id = "";
@@ -191,7 +192,8 @@ return (
 
     <div style={{ marginBottom: "15px", display: "flex", gap: "10px" }}>
       <input
-        disabled={role !== "host" && role !== "moderator"}
+        // disabled={role !== "host" && role !== "moderator"}
+        disabled={role !== "host"}
         placeholder="Paste YouTube URL..."
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
@@ -201,7 +203,8 @@ return (
         style={{ flex: 1 }}
       />
 
-      <button onClick={handleVideoChange}>
+      <button   disabled={role !== "host"}
+                onClick={handleVideoChange}>
         Load Video
       </button>
     </div>
@@ -215,3 +218,5 @@ return (
 }
 
 export default VideoPlayer;
+
+
