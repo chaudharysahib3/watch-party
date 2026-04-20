@@ -5,7 +5,7 @@ function VideoPlayer({ roomId, role }) {
   const playerRef = useRef(null);
   const [inputValue, setInputValue] = useState("");
 
-  //Load YouTube API
+  // 🔥 Load YouTube API
   useEffect(() => {
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
@@ -13,8 +13,8 @@ function VideoPlayer({ roomId, role }) {
 
     window.onYouTubeIframeAPIReady = () => {
       playerRef.current = new window.YT.Player("player", {
-        height: "300",
-        width: "500",
+        height: "400",
+        width: "100%",
         videoId: "",
         playerVars: {
           autoplay: 1,
@@ -22,7 +22,6 @@ function VideoPlayer({ roomId, role }) {
         },
         events: {
           onStateChange: (event) => {
-            
             if (role !== "host" && role !== "moderator") return;
 
             if (event.data === window.YT.PlayerState.PLAYING) {
@@ -38,82 +37,90 @@ function VideoPlayer({ roomId, role }) {
     };
   }, [role, roomId]);
 
+  // 🔥 Request sync when join
   useEffect(() => {
-  socket.emit("request_sync", { roomId });
-}, [roomId]);
+    socket.emit("request_sync", { roomId });
+  }, [roomId]);
 
-useEffect(() => {
-  socket.on("send_sync", ({ target }) => {
-    if (role !== "host") return;
-
-    const player = playerRef.current;
-    if (!player) return;
-
-    socket.emit("sync_state", {
-      roomId,
-      target,
-      state: {
-        videoId: player.getVideoData().video_id,
-        currentTime: player.getCurrentTime(),
-        isPlaying:
-          player.getPlayerState() === window.YT.PlayerState.PLAYING,
-      },
-    });
-  });
-
-  return () => socket.off("send_sync");
-}, [role]);
-
-useEffect(() => {
-  socket.on("sync_state", (state) => {
-    const player = playerRef.current;
-    if (!player) return;
-
-    player.loadVideoById(state.videoId);
-    player.seekTo(state.currentTime, true);
-
-    if (state.isPlaying) player.playVideo();
-    else player.pauseVideo();
-  });
-
-  return () => socket.off("sync_state");
-}, []);
-
-// SYNC TIME (HOST ONLY)
-useEffect(() => {
-  const interval = setInterval(() => {
-    if (role === "host" && playerRef.current) {
-      const time = playerRef.current.getCurrentTime();
-      socket.emit("seek", { roomId, time });
-    }
-  }, 2000); // every 2 sec
-
-  return () => clearInterval(interval);
-}, [role, roomId]);
-
-
+  // 🔥 Host sends sync
   useEffect(() => {
-    socket.on("change_video", ({ videoId }) => {
-      playerRef.current?.loadVideoById(videoId);
-    });
+    const handleSendSync = ({ target }) => {
+      if (role !== "host") return;
 
-    socket.on("play", () => {
-      playerRef.current?.playVideo();
-    });
+      const player = playerRef.current;
+      if (!player) return;
 
-    socket.on("pause", () => {
-      playerRef.current?.pauseVideo();
-    });
+      socket.emit("sync_state", {
+        roomId,
+        target,
+        state: {
+          videoId: player.getVideoData().video_id,
+          currentTime: player.getCurrentTime(),
+          isPlaying:
+            player.getPlayerState() === window.YT.PlayerState.PLAYING,
+        },
+      });
+    };
 
-    socket.on("seek", ({ time }) => {
-      playerRef.current?.seekTo(time, true);
-    });
+    socket.on("send_sync", handleSendSync);
+    return () => socket.off("send_sync", handleSendSync);
+  }, [role, roomId]);
 
-    return () => socket.off();
+  // 🔥 Receive sync
+  useEffect(() => {
+    const handleSync = (state) => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      player.loadVideoById(state.videoId);
+      player.seekTo(state.currentTime, true);
+
+      if (state.isPlaying) player.playVideo();
+      else player.pauseVideo();
+    };
+
+    socket.on("sync_state", handleSync);
+    return () => socket.off("sync_state", handleSync);
   }, []);
 
+  // 🔥 Host sync time every 2 sec
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (role === "host" && playerRef.current) {
+        const time = playerRef.current.getCurrentTime();
+        socket.emit("seek", { roomId, time });
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [role, roomId]);
+
+  // 🔥 Socket listeners
+  useEffect(() => {
+    const handleChangeVideo = ({ videoId }) => {
+      playerRef.current?.loadVideoById(videoId);
+    };
+
+    const handlePlay = () => playerRef.current?.playVideo();
+    const handlePause = () => playerRef.current?.pauseVideo();
+    const handleSeek = ({ time }) =>
+      playerRef.current?.seekTo(time, true);
+
+    socket.on("change_video", handleChangeVideo);
+    socket.on("play", handlePlay);
+    socket.on("pause", handlePause);
+    socket.on("seek", handleSeek);
+
+    return () => {
+      socket.off("change_video", handleChangeVideo);
+      socket.off("play", handlePlay);
+      socket.off("pause", handlePause);
+      socket.off("seek", handleSeek);
+    };
+  }, []);
+
+  // 🔥 Change video (HOST only)
   const handleVideoChange = () => {
-    // if (role !== "host" && role !== "moderator") return;
     if (role !== "host") return;
 
     const url = inputValue.trim();
@@ -138,83 +145,32 @@ useEffect(() => {
     }
 
     socket.emit("change_video", { roomId, videoId: id });
-
   };
-  
-  useEffect(() => {
-socket.emit("request_sync", { roomId });
-}, [roomId]);
 
-useEffect(() => {
-  socket.on("send_sync", ({ target }) => {
-    if (role !== "host") return;
+  return (
+    <div>
+      <div style={{ marginBottom: "15px", display: "flex", gap: "10px" }}>
+        <input
+          disabled={role !== "host"}
+          placeholder="Paste YouTube URL..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleVideoChange();
+          }}
+          style={{ flex: 1 }}
+        />
 
-    const player = playerRef.current;
-    if (!player) return;
+        <button disabled={role !== "host"} onClick={handleVideoChange}>
+          Load Video
+        </button>
+      </div>
 
-    const state = {
-      videoId: player.getVideoData().video_id,
-      currentTime: player.getCurrentTime(),
-      isPlaying:
-        player.getPlayerState() === window.YT.PlayerState.PLAYING,
-    };
-
-    socket.emit("sync_state", {
-      roomId,
-      state,
-      target,
-    });
-  });
-
-  return () => socket.off("send_sync");
-}, [role]);
-
-useEffect(() => {
-  socket.on("sync_state", (state) => {
-    const player = playerRef.current;
-    if (!player) return;
-
-    player.loadVideoById(state.videoId);
-    player.seekTo(state.currentTime, true);
-
-    if (state.isPlaying) {
-      player.playVideo();
-    } else {
-      player.pauseVideo();
-    }
-  });
-
-  return () => socket.off("sync_state");
-}, []);
-
-return (
-  <div>
-
-    <div style={{ marginBottom: "15px", display: "flex", gap: "10px" }}>
-      <input
-        // disabled={role !== "host" && role !== "moderator"}
-        disabled={role !== "host"}
-        placeholder="Paste YouTube URL..."
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleVideoChange();
-        }}
-        style={{ flex: 1 }}
-      />
-
-      <button   disabled={role !== "host"}
-                onClick={handleVideoChange}>
-        Load Video
-      </button>
+      <div className="video-wrapper">
+        <div id="player"></div>
+      </div>
     </div>
-
-    <div className="video-wrapper">
-      <div id="player"></div>
-    </div>
-
-  </div>
-);
+  );
 }
 
 export default VideoPlayer;
