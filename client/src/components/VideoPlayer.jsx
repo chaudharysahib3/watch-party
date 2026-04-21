@@ -5,7 +5,7 @@ function VideoPlayer({ roomId, role }) {
   const playerRef = useRef(null);
   const [inputValue, setInputValue] = useState("");
 
-  // 🔥 Load YouTube API
+  
   useEffect(() => {
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
@@ -37,12 +37,12 @@ function VideoPlayer({ roomId, role }) {
     };
   }, [role, roomId]);
 
-  // 🔥 Request sync when join
+  
   useEffect(() => {
     socket.emit("request_sync", { roomId });
   }, [roomId]);
 
-  // 🔥 Host sends sync
+ 
   useEffect(() => {
     const handleSendSync = ({ target }) => {
       if (role !== "host") return;
@@ -66,7 +66,7 @@ function VideoPlayer({ roomId, role }) {
     return () => socket.off("send_sync", handleSendSync);
   }, [role, roomId]);
 
-  // 🔥 Receive sync
+  
   useEffect(() => {
     const handleSync = (state) => {
       const player = playerRef.current;
@@ -95,7 +95,7 @@ function VideoPlayer({ roomId, role }) {
     return () => clearInterval(interval);
   }, [role, roomId]);
 
-  // 🔥 Socket listeners
+ 
   useEffect(() => {
     const handleChangeVideo = ({ videoId }) => {
       playerRef.current?.loadVideoById(videoId);
@@ -119,7 +119,7 @@ function VideoPlayer({ roomId, role }) {
     };
   }, []);
 
-  // 🔥 Change video (HOST only)
+  
   const handleVideoChange = () => {
     if (role !== "host") return;
 

@@ -10,10 +10,10 @@ function Room({ username, roomId }) {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    // 🔥 Join room
+    
     socket.emit("join_room", { roomId, username });
 
-    // 🔥 Handlers
+    
     const handleUserJoined = ({ users }) => {
       setUsers(users);
 
@@ -31,12 +31,12 @@ function Room({ username, roomId }) {
       setUsers(users);
     };
 
-    // 🔥 Attach listeners
+   
     socket.on("user_joined", handleUserJoined);
     socket.on("user_left", handleUserLeft);
     socket.on("role_assigned", handleRoleAssigned);
 
-    // 🔥 Cleanup (IMPORTANT)
+    
     return () => {
       socket.off("user_joined", handleUserJoined);
       socket.off("user_left", handleUserLeft);
@@ -56,10 +56,12 @@ function Room({ username, roomId }) {
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
+     
       <div className="room-right">
         <div className="card">
-          <Participants roomId={roomId} role={currentUser?.role} />
+          <Participants roomId={roomId} role={currentUser?.role} 
+           users={users}
+          />
         </div>
 
         <div className="card">
